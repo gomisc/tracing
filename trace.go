@@ -53,6 +53,20 @@ func (t *Trace) WithFields(flds ...fields.Field) *Trace {
 }
 
 func (t *Trace) WithError(err error, args ...any) (*Trace, error) {
+	if l := len(args); l != 0 {
+		if msg, ok := args[0].(string); ok && l == 1 {
+			err = errors.Wrap(err, msg)
+		} else {
+			err = errors.Wrapf(err, msg, args[1:]...)
+		}
+	}
+
+	t.span.SetStatus(codes.Error, err.Error())
+
+	return t, err
+}
+
+func (t *Trace) WithFormattedError(err error, args ...any) (*Trace, error) {
 	err = errors.Formatted(err, args...)
 
 	t.span.SetStatus(codes.Error, err.Error())
