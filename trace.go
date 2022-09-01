@@ -52,10 +52,12 @@ func (t *Trace) WithFields(flds ...fields.Field) *Trace {
 	return t
 }
 
-func (t *Trace) WithError(err error) *Trace {
-	t.span.SetStatus(codes.Error, errors.Formatted(err).Error())
+func (t *Trace) WithError(err error, args ...any) (*Trace, error) {
+	err = errors.Formatted(err, args...)
 
-	return t
+	t.span.SetStatus(codes.Error, err.Error())
+
+	return t, err
 }
 
 func (t *Trace) End() {
