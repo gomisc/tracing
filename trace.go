@@ -5,8 +5,8 @@ import (
 	"runtime"
 	"strings"
 
-	"git.corout.in/golibs/errors"
-	"git.corout.in/golibs/fields"
+	"git.eth4.dev/golibs/errors"
+	"git.eth4.dev/golibs/fields"
 	"go.opentelemetry.io/otel/codes"
 	"go.opentelemetry.io/otel/trace"
 )
@@ -16,7 +16,7 @@ type Trace struct {
 	ctx  context.Context
 }
 
-func SetTrace(ctx context.Context, args ...interface{}) *Trace {
+func SetTrace(ctx context.Context, args ...any) *Trace {
 	tracer := fromContext(ctx)
 	name := getOperationName(2)
 
@@ -55,9 +55,9 @@ func (t *Trace) WithFields(flds ...fields.Field) *Trace {
 func (t *Trace) WithError(err error, args ...any) (*Trace, error) {
 	if l := len(args); l != 0 {
 		if msg, ok := args[0].(string); ok && l == 1 {
-			err = errors.Wrap(err, msg)
+			err = errors.Ctx().Pos(2).Wrap(err, msg)
 		} else {
-			err = errors.Wrapf(err, msg, args[1:]...)
+			err = errors.Ctx().Pos(2).Wrapf(err, msg, args[1:]...)
 		}
 	}
 

@@ -1,10 +1,10 @@
-module git.corout.in/golibs/tracing
+module git.eth4.dev/golibs/tracing
 
 go 1.19
 
 require (
-	git.corout.in/golibs/errors v1.1.19
-	git.corout.in/golibs/fields v1.0.6
+	git.eth4.dev/golibs/errors v1.1.19
+	git.eth4.dev/golibs/fields v1.0.6
 	go.opentelemetry.io/otel/trace v1.9.0
 )
 
