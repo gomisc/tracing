@@ -17,39 +17,34 @@ import (
 
 const ShutdownTimeout = time.Second * 5
 
-type (
-	traceProvider struct {
-		execs.Runner
-		tracingOptions
-		prov *tracesdk.TracerProvider
-	}
-)
+func ProviderRunner(opts ...Option) execs.Runner {
+	options := evaluateOptions(opts...)
 
-func ProviderRunner(ctx context.Context, opts ...Option) (context.Context, execs.Runner) {
-	provider := &traceProvider{
-		tracingOptions: evaluateOptions(opts...),
-	}
+	return execs.RunFunc(func(signals <-chan os.Signal, ready chan<- struct{}) error {
+		// todo: validate options
 
-	return context.WithValue(ctx, providerKey{}, provider), provider
-}
+		provider, err := jaegerTraceProvider(
+			options.url,
+			options.serviceName,
+			options.envName,
+		)
+		if err != nil {
+			return errors.Wrap(err, "prepare tracing provider")
+		}
 
-func (tp *traceProvider) Run(signals <-chan os.Signal, ready chan<- struct{}) (err error) {
-	if tp.prov, err = jaegerTraceProvider(tp.url, tp.serviceName, tp.envName); err != nil {
-		return errors.Wrap(err, "prepare tracing provider")
-	}
+		otel.SetTracerProvider(provider)
+		close(ready)
+		<-signals
 
-	otel.SetTracerProvider(tp.prov)
-	close(ready)
-	<-signals
+		ctx, cancel := context.WithTimeout(context.Background(), ShutdownTimeout)
+		defer cancel()
 
-	ctx, cancel := context.WithTimeout(context.Background(), ShutdownTimeout)
-	defer cancel()
+		if err = provider.Shutdown(ctx); err != nil {
+			return errors.Wrap(err, "shutdown tracing provider")
+		}
 
-	if err = tp.prov.Shutdown(ctx); err != nil {
-		return errors.Wrap(err, "shutdown tracing provider")
-	}
-
-	return nil
+		return nil
+	})
 }
 
 // jaegerTraceProvider returns an OpenTelemetry TracerProvider configured to use

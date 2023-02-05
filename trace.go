@@ -7,6 +7,7 @@ import (
 
 	"git.eth4.dev/golibs/errors"
 	"git.eth4.dev/golibs/fields"
+	"go.opentelemetry.io/otel"
 	"go.opentelemetry.io/otel/codes"
 	"go.opentelemetry.io/otel/trace"
 )
@@ -16,15 +17,25 @@ type Trace struct {
 	ctx  context.Context
 }
 
-func SetTrace(ctx context.Context, args ...any) *Trace {
-	tracer := fromContext(ctx)
-	name := getOperationName(2)
+var nopProvider = trace.NewNoopTracerProvider()
 
-	if len(args) != 0 {
+func SetTrace(ctx context.Context, args ...any) *Trace {
+	provider := otel.GetTracerProvider()
+	if provider == nil {
+		provider = nopProvider
+	}
+
+	path, name := getOperationName(2)
+	if len(args) >= 1 {
 		name = args[0].(string)
 	}
 
-	next, span := tracer.Start(ctx, name)
+	if len(args) >= 2 {
+		path = args[0].(string)
+		name = args[1].(string)
+	}
+
+	next, span := provider.Tracer(path).Start(ctx, name)
 
 	return &Trace{
 		span: span,
@@ -80,13 +91,13 @@ func (t *Trace) End() {
 
 // Получает имя вызывающей операции трейсинга по стеку вызовов
 // nolint
-func getOperationName(depth int) (fname string) {
+func getOperationName(depth int) (path, fname string) {
 	pc, _, _, _ := runtime.Caller(depth) // nolint: gomnd, dogsled
 	fname = runtime.FuncForPC(pc).Name()
 
-	if oi := strings.LastIndex(fname, "/"); oi > 0 {
-		return fname[oi+1:]
+	if oi := strings.LastIndex(fname, ".("); oi > 0 {
+		return fname[:oi], fname[oi+1:]
 	}
 
-	return fname
+	return "", fname
 }
