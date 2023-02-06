@@ -1,6 +1,8 @@
 package tracing
 
 import (
+	"encoding/json"
+
 	"go.opentelemetry.io/otel/attribute"
 )
 
@@ -74,5 +76,9 @@ func (a *attributes) Any(key string, value interface{}) {
 	case []float64:
 		v := value.([]float64)
 		*a = append(*a, attribute.Float64Slice(key, v))
+	default:
+		if b, err := json.Marshal(&value); err == nil {
+			*a = append(*a, attribute.String(key, string(b)))
+		}
 	}
 }
