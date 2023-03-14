@@ -5,11 +5,11 @@ import (
 	"runtime"
 	"strings"
 
-	"git.eth4.dev/golibs/errors"
-	"git.eth4.dev/golibs/fields"
 	"go.opentelemetry.io/otel"
 	"go.opentelemetry.io/otel/codes"
 	"go.opentelemetry.io/otel/trace"
+	"gopkg.in/gomisc/errors.v1"
+	"gopkg.in/gomisc/fields.v1"
 )
 
 type Trace struct {

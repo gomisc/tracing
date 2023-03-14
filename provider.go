@@ -5,14 +5,14 @@ import (
 	"os"
 	"time"
 
-	"git.eth4.dev/golibs/errors"
-	"git.eth4.dev/golibs/execs"
 	"go.opentelemetry.io/otel"
 	"go.opentelemetry.io/otel/attribute"
 	"go.opentelemetry.io/otel/exporters/jaeger"
 	"go.opentelemetry.io/otel/sdk/resource"
 	tracesdk "go.opentelemetry.io/otel/sdk/trace"
 	semconv "go.opentelemetry.io/otel/semconv/v1.17.0"
+	"gopkg.in/gomisc/errors.v1"
+	"gopkg.in/gomisc/execs.v1"
 )
 
 const ShutdownTimeout = time.Second * 5
